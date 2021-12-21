@@ -4,7 +4,7 @@ const MAX_PER_DAY = 5000;
 const MAX_PER_WEEK = 20000;
 const MAX_LOADS_PER_DAY = 3;
 
-lineReader.eachLine('input.txt', function(line) {
+lineReader.eachLine('input2.txt', function(line) {
   const load = JSON.parse(line);
 
   if (customer[load.customer_id]?.load_id !== load.id) {
@@ -76,7 +76,8 @@ lineReader.eachLine('input.txt', function(line) {
     console.log(JSON.stringify({
       id: load.id,
       customer_id: load.customer_id,
-      accepted
+      accepted,
+      v: loadAmount
     }));
   }
 });
