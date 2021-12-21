@@ -1,13 +1,20 @@
 const lineReader = require('line-reader');
+const fs = require('fs');
+
 const customer = {};
 const MAX_PER_DAY = 5000;
 const MAX_PER_WEEK = 20000;
 const MAX_LOADS_PER_DAY = 3;
+const RESULT_PATH = 'output2.txt';
 
-lineReader.eachLine('input2.txt', function(line) {
+if (fs.existsSync(RESULT_PATH)) {
+  fs.unlinkSync(RESULT_PATH);
+}
+
+lineReader.eachLine('input.txt', function(line) {
   const load = JSON.parse(line);
 
-  if (customer[load.customer_id]?.load_id !== load.id) {
+  if (!customer[load.customer_id]?.load_ids.includes(load.id)) {
     const loadAmount = parseFloat(load.load_amount.replace('$', ''));
     const totalLoadAmountDay = customer[load.customer_id]?.total_load_amount_day || 0;
     const totalLoadAmountWeek = customer[load.customer_id]?.total_load_amount_week || 0;
@@ -23,9 +30,9 @@ lineReader.eachLine('input2.txt', function(line) {
     if (lastLoadTime) {
       const lastLoadDate = new Date(lastLoadTime);
       const currentLoadDate = new Date(load.time);
-      const currentLoadDate2 = new Date(currentLoadDate.getUTCFullYear(), currentLoadDate.getUTCMonth(), currentLoadDate.getUTCDate());
-      const thisMonday = new Date(currentLoadDate2.setDate(currentLoadDate2.getDate() - currentLoadDate2.getDay() + 1));
-      const nextMonday = new Date(currentLoadDate2.setDate(currentLoadDate2.getDate() - currentLoadDate2.getDay() + 8));
+      const currentLoadDateInitalTime = new Date(currentLoadDate.getUTCFullYear(), currentLoadDate.getUTCMonth(), currentLoadDate.getUTCDate());
+      const thisMonday = new Date(currentLoadDateInitalTime.setDate(currentLoadDateInitalTime.getDate() - currentLoadDateInitalTime.getDay() + 1));
+      const nextMonday = new Date(currentLoadDateInitalTime.setDate(currentLoadDateInitalTime.getDate() - currentLoadDateInitalTime.getDay() + 8));
 
       formatedLastLoadDate = `${lastLoadDate.getUTCFullYear()}/${lastLoadDate.getUTCMonth()+1}/${lastLoadDate.getUTCDate()}`;
       formatedCurrentLoadDate = `${currentLoadDate.getUTCFullYear()}/${currentLoadDate.getUTCMonth()+1}/${currentLoadDate.getUTCDate()}`;
@@ -41,7 +48,7 @@ lineReader.eachLine('input2.txt', function(line) {
     const totalAmountOnWeek = isSameWeek ? totalLoadAmountWeek + loadAmount : loadAmount;
 
     if (customer[load.customer_id]) {
-      customer[load.customer_id].load_id = load.id;
+      customer[load.customer_id].load_ids = [...customer[load.customer_id].load_ids, load.id];
       customer[load.customer_id].load_amount = loadAmount;
       customer[load.customer_id].load_time = load.time;
       customer[load.customer_id].total_load_amount_day = totalAmountOnDay;
@@ -50,7 +57,7 @@ lineReader.eachLine('input2.txt', function(line) {
       customer[load.customer_id].rejected = false;
     } else {
       customer[load.customer_id] = {
-        load_id: load.id,
+        load_ids: [load.id],
         load_amount: loadAmount,
         load_time: load.time,
         total_load_amount_day: totalAmountOnDay,
@@ -71,13 +78,12 @@ lineReader.eachLine('input2.txt', function(line) {
       customer[load.customer_id].total_load_amount_week = totalAmountOnWeek - loadAmount;
     }
 
-    // console.log(customer[load.customer_id]);
-
-    console.log(JSON.stringify({
+    const result = `${JSON.stringify({
       id: load.id,
       customer_id: load.customer_id,
       accepted,
-      v: loadAmount
-    }));
+    })}\n`;
+
+    fs.appendFileSync('output3.txt', result);
   }
 });
